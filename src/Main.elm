@@ -56,31 +56,33 @@ update msg model =
         SetGrid grid -> (grid, Cmd.none)
         Push i j ->
             let
+                arr = flatten model
                 idx = coordsToIndex (i, j)
             in
-                case Array.get idx model of
-                    Nothing -> (model, Cmd.none)
-                    Just _ -> (push model (i, j), Cmd.none)
+                case Array.get idx arr of
+                    Nothing ->       (model, Cmd.none)
+                    Just Nothing ->  (model, Cmd.none)
+                    Just (Just n) -> (reshape (push arr n (i, j)), Cmd.none)
 
-push : Grid -> (Int, Int) -> Model
-push grid (i, j) =
+push : Array Tile -> Int -> (Int, Int) -> Array Tile
+push arr n (i, j) =
     let
-        arr        = flatten grid
+        idx        = coordsToIndex (i, j)
         up_idx     = coordsToIndex (i - 1, j)
         right_idx  = coordsToIndex (i, j + 1)
-        bottom_idx = coordsToIndex (i - 1, j)
+        bottom_idx = coordsToIndex (i + 1, j)
         left_idx   = coordsToIndex (i, j - 1)
     in
-        if Array.get up_idx arr          == Nothing then
-            grid
-        else if Array.get right_idx arr  == Nothing then
-            grid
-        else if Array.get bottom_idx arr == Nothing then
-            grid
-        else if Array.get left_idx arr   == Nothing then
-            grid
+        if Array.get up_idx arr          == Just Nothing then
+            Array.set idx Nothing (Array.set up_idx (Just n) arr)
+        else if Array.get right_idx arr  == Just Nothing then
+            Array.set idx Nothing (Array.set right_idx (Just n) arr)
+        else if Array.get bottom_idx arr == Just Nothing then
+            Array.set idx Nothing (Array.set bottom_idx (Just n) arr)
+        else if Array.get left_idx arr   == Just Nothing then
+            Array.set idx Nothing (Array.set left_idx (Just n) arr)
         else
-            grid
+            arr
 
 subscriptions : Model -> Sub Msg
 subscriptions _ = Sub.none
